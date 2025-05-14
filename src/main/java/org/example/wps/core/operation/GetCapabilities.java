@@ -1,12 +1,9 @@
 package org.example.wps.core.operation;
 
+import org.example.wps.utils.ProcessFactoryUtil;
 import org.geotools.api.feature.type.Name;
 import org.geotools.process.ProcessFactory;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,7 +29,7 @@ public class GetCapabilities {
                 """);
 
 //        Set<ProcessFactory> processFactories = Processors.getProcessFactories();  // 该方法会把gt源码中创建的process也加进来
-        List<ProcessFactory> processFactories = loadLocalFactories();
+        List<ProcessFactory> processFactories = ProcessFactoryUtil.loadLocalFactories();
         for (ProcessFactory factory : processFactories) {
             for (Name name : factory.getNames()) {
                 String identifier = name.getURI();
@@ -50,30 +47,6 @@ public class GetCapabilities {
         xml.append("</wps:ProcessOfferings>");
         xml.append("</wps:Capabilities>");
         return xml.toString();
-    }
-
-    public List<ProcessFactory> loadLocalFactories() {
-        List<ProcessFactory> factories = new ArrayList<>();
-        try (InputStream is = getClass().getClassLoader()
-                .getResourceAsStream("META-INF/services/org.geotools.process.ProcessFactory")) {
-
-            if (is != null) {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    line = line.trim();
-                    if (!line.isEmpty() && !line.startsWith("#")) {
-                        Class<?> clazz = Class.forName(line);
-                        if (ProcessFactory.class.isAssignableFrom(clazz)) {
-                            factories.add((ProcessFactory) clazz.getDeclaredConstructor().newInstance());
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load custom ProcessFactory", e);
-        }
-        return factories;
     }
 
 
